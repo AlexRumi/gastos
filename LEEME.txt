@@ -1,0 +1,12 @@
+MIS GASTOS - app instalable (PWA)
+
+Archivos (todos deben subirse tal cual, respetando la carpeta icons):
+  index.html
+  manifest.webmanifest
+  sw.js
+  icons/icon-192.png
+  icons/icon-512.png
+  icons/icon-maskable-512.png
+
+Tus datos se guardan solo en el móvil (almacenamiento local del navegador).
+Usa Ajustes > Copia de seguridad de vez en cuando.
