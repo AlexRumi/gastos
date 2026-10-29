@@ -89,7 +89,7 @@ const shift=(k,n)=>{const[y,m]=k.split('-').map(Number);const d=new Date(y,m-1+n
 const label=k=>{const[y,m]=k.split('-').map(Number),sd=S&&S.sd||1;if(sd===1)return new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});const f=d=>d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});return f(new Date(y,m-1,sd))+' – '+f(new Date(y,m,sd-1))};
 const PAL=['#0E7C66','#2F6DB5','#B7791F','#8E5BB5','#C0392B','#3C8D93','#7A8B3A','#B5527A','#E07A2F','#4A5FC1','#2E9E5B','#8C6D4F','#D1477A','#5E7C8A','#A3A12B','#6B4FA0'];
 function colorFor(k,n){if(!S.cc)S.cc={};const key=k+':'+n;if(!S.cc[key]){const u=Object.keys(S.cc).filter(a=>a.startsWith(k+':')).map(a=>S.cc[a]);S.cc[key]=PAL.find(c=>!u.includes(c))||PAL[u.length%PAL.length];save()}return S.cc[key]}
-const CK={g:'cats',i:'catsI',v:'catsV'},DI=['Nómina','Extra','Rendimientos'],DV=['Fondo indexado','Acciones / ETF','Criptomonedas','Plan de pensiones','Otros'];
+const CK={g:'cats',i:'catsI',v:'catsV'},DI=['Nómina','Extra','Rendimientos'],DV=['S&P 500','MSCI World','Bitcoin','Otros'],OLDV=['Fondo indexado','Acciones / ETF','Criptomonedas','Plan de pensiones','Otros'];
 const FC='Pagos fijos',FX=()=>S.fx||(S.fx=[]),fxQ=f=>(S.qo&&S.qo[cur+':'+f.id])||f.q,DFX=[{id:'d1',n:'Atresplayer',a:9.99,q:1},{id:'d2',n:'Gimnasio',a:33.49,q:1},{id:'d3',n:'DAZN',a:19.99,q:1},{id:'d4',n:'PlayStation Plus',a:13.99,q:1},{id:'d5',n:'Ionos',a:1.21,q:1},{id:'d6',n:'Shopify',a:10,q:1},{id:'d7',n:'Spotify',a:3.6,q:1},{id:'d8',n:'Amazon Prime',a:4.99,q:1},{id:'d9',n:'Depilación de cejas',a:5,q:2},{id:'d10',n:'Pelado',a:13,q:2}];
 let cur=mk(today()),type='g',shown=5;const PAGE=5;
 
@@ -100,6 +100,16 @@ function limitFor(key){let m=earliest(),lim=S.limit,ex=0;
   return{lim,ex}}
 const balance=()=>S.b0+S.tx.reduce((a,t)=>a+(t.t==='i'?t.a:-t.a),0);
 
+function objHtml(){const b=balance(),G=(S.goals||[]).slice().sort((x,y)=>x-y);
+  if(!G.length)return '';
+  S.gr=S.gr||[];let ch=false;G.forEach(g=>{if(b>=g&&!S.gr.includes(g)){S.gr.push(g);ch=true}});if(ch)save();
+  const nx=G.find(g=>!S.gr.includes(g)),prev=Math.max(0,...G.filter(g=>S.gr.includes(g)&&(!nx||g<nx)));
+  const pct=nx?Math.max(0,Math.min(100,(b-prev)/(nx-prev)*100)):100;
+  const title=nx?'Próxima meta: '+fmt(nx):'Todas tus metas cumplidas';
+  const msg=nx?'Te faltan '+fmt(Math.max(0,nx-b))+'.':'Añade una nueva meta en Ajustes.';
+  const chips=G.map(g=>{const ok=S.gr.includes(g);return `<span class="chip" style="${ok?'color:var(--ok)':''}">${ok?'✓ ':''}${fmt(g)}</span>`}).join('');
+  return `<div class="card" style="margin-top:14px"><div class="row"><b>${title}</b><span class="small mute">${nx?fmt(b)+' de '+fmt(nx):''}</span></div><div class="bar"><i style="width:${pct}%;background:var(--ok)"></i></div><div class="small mute">${msg}</div><div style="margin-top:8px">${chips}</div></div>`}
+function goalsBlock(){const G=(S.goals||[]).slice().sort((x,y)=>x-y);return `<details class="cg" data-g="gl"${OPEN.gl?' open':''}><summary><span>Tus metas</span><span class="rt"><span class="mute small">${G.length}</span><i class="chev"></i></span></summary>${G.map(g=>`<div class="ci"><span>${fmt(g)}</span><span class="ac"><button class="x" data-dg="${g}" aria-label="Quitar meta ${fmt(g)}" title="Quitar">${TR}</button></span></div>`).join('')}<div class="ca"><input id="ng" type="number" inputmode="decimal" placeholder="Nueva meta (€)" aria-label="Nueva meta"><button data-ag>Añadir</button></div></details>`}
 function render(){
   if(!S){return onboarding()}
   const{lim,ex}=limitFor(cur),sp=spent(cur),pct=lim>0?Math.min(100,sp/lim*100):100;
@@ -107,6 +117,10 @@ function render(){
   const inc=S.tx.filter(t=>t.t==='i'&&mk(t.d)===cur).reduce((a,t)=>a+t.a,0);
   const over=sp>lim,left=lim-sp,col=over?'var(--bad)':pct>80?'var(--warn)':'var(--ok)';
   const inv=S.tx.filter(t=>t.t==='v'&&mk(t.d)===cur).reduce((a,t)=>a+t.a,0),invT=S.tx.filter(t=>t.t==='v').reduce((a,t)=>a+t.a,0);
+  const vAll=S.tx.filter(t=>t.t==='v'),byM={},hist={};
+  vAll.forEach(t=>{byM[t.c]=(byM[t.c]||0)+t.a;const k=mk(t.d);(hist[k]=hist[k]||{})[t.c]=(hist[k][t.c]||0)+t.a});
+  const mkts=Object.entries(byM).sort((a,b)=>b[1]-a[1]),hk=Object.keys(hist).sort().reverse();
+  const invMk=invT>0?`<div style="margin-top:14px;font-weight:600">Por mercado</div>${mkts.map(([c,v])=>`<div class="cat"><span class="dot" style="background:${colorFor('catsV',c)}"></span><span style="width:104px">${esc(c)}</span><span class="b"><i style="width:${v/invT*100}%;background:${colorFor('catsV',c)}"></i></span><span class="small">${fmt(v)} <span class="mute">${Math.round(v/invT*100)} %</span></span></div>`).join('')}<details class="cg" data-g="hv"${OPEN.hv?' open':''}><summary><span>Histórico mes a mes</span><span class="rt"><span class="mute small">${hk.length}</span><i class="chev"></i></span></summary>${hk.map(k=>{const e=Object.entries(hist[k]).sort((a,b)=>b[1]-a[1]),tot=e.reduce((a,[,v])=>a+v,0);return `<div class="ci" style="align-items:flex-start"><span><span style="text-transform:capitalize">${label(k)}</span><span class="mute small" style="display:block">${e.map(([c,v])=>esc(c)+' '+fmt(v)).join(' · ')}</span></span><b>${fmt(tot)}</b></div>`}).join('')}</details>`:'';
   const mt=S.tx.filter(t=>mk(t.d)===cur).sort((a,b)=>b.d.localeCompare(a.d)||b.id-a.id);
   const by={};mt.filter(t=>t.t==='g').forEach(t=>by[t.c]=(by[t.c]||0)+t.a);
   const cats=Object.entries(by).sort((a,b)=>b[1]-a[1]);
@@ -117,7 +131,8 @@ function render(){
   $('#app').innerHTML=`
   <div class="row"><div><div class="mute small">Dinero en el banco</div><div class="bal">${fmt(balance())}</div></div>
   <button id="cfg" aria-label="Ajustes">Ajustes</button></div>
-  <button class="pri" id="add" style="width:100%;margin-top:16px">Añadir movimiento</button>
+  ${objHtml()}
+  <button class="pri" id="add" style="width:100%;margin-top:14px">Añadir movimiento</button>
 
   <div class="row" style="margin-top:18px"><button id="pv" aria-label="Mes anterior">‹</button><h2 style="text-transform:capitalize">${label(cur)}</h2><button id="nx" aria-label="Mes siguiente">›</button></div>
   <div class="small" style="text-align:center;margin-top:8px"><b style="color:${inc>0?'var(--ok)':'var(--ink)'}">${inc>0?'+':''}${fmt(inc)}</b> <span class="mute">ingresos</span>&emsp;<b style="color:${spT>0?'var(--bad)':'var(--ink)'}">${spT>0?'−':''}${fmt(spT)}</b> <span class="mute">gastos</span></div>
@@ -130,7 +145,7 @@ function render(){
   </div>
 
   
-  <div class="card"><div class="row"><b>Inversión</b><span class="chip">Total ${fmt(invT)}</span></div><div style="margin-top:6px"><span style="font-size:22px;font-weight:800;color:${inv>0?'var(--ok)':'var(--ink)'}">${fmt(inv)}</span> <span class="mute">invertidos este mes (salen del banco)</span></div><div class="note" style="border-left-color:${inv>0?'var(--ok)':'var(--line)'};color:${inv>0?'var(--ok)':'var(--mute)'};font-weight:600">${inv>0?'✓ Inversión del mes realizada':'Inversión de este mes pendiente'}</div></div>
+  <div class="card"><div class="row"><b>Inversión</b><span class="chip">Total ${fmt(invT)}</span></div><div style="margin-top:6px"><span style="font-size:22px;font-weight:800;color:${inv>0?'var(--ok)':'var(--ink)'}">${fmt(inv)}</span> <span class="mute">invertidos este mes (salen del banco)</span></div><div class="note" style="border-left-color:${inv>0?'var(--ok)':'var(--line)'};color:${inv>0?'var(--ok)':'var(--mute)'};font-weight:600">${inv>0?'✓ Inversión del mes realizada':'Inversión de este mes pendiente'}</div>${invMk}</div>
 
   
 
@@ -158,7 +173,7 @@ function onboarding(){
   <div style="text-align:center;margin-top:10px"><button class="link" id="demo">Cargar datos de ejemplo</button></div></div>`;
   const start=seed=>{const b=parseFloat($('#b0').value),l=parseFloat($('#l0').value);
     if(isNaN(b)||isNaN(l)||l<0){$('#b0').focus();return}
-    S={b0:b,limit:l,cats:['Alimentación','Transporte','Ocio','Hogar','Salud','Otros'],catsI:[...DI],catsV:[...DV],fx:DFX.map(x=>({...x})),fxInit:1,tx:[]};
+    S={b0:b,limit:l,cats:['Alimentación','Transporte','Ocio','Hogar','Salud','Otros'],catsI:[...DI],catsV:[...DV],fx:DFX.map(x=>({...x})),fxInit:1,og:1,og2:1,goals:[1000,2000,5000,10000],tx:[]};
     if(seed){const p=shift(cur,-1),c=cur;let id=1;
       const A=(d,t,a,cat,n)=>S.tx.push({id:id++,d,t,a,c:cat,n});
       A(p+'-01','i',1450,'Nómina','Nómina');A(p+'-04','g',180,'Alimentación','Compra mensual');A(p+'-12','g',90,'Ocio','Cenas');A(p+'-20','g',130,'Hogar','Luz y agua');
@@ -173,18 +188,20 @@ function close(){$('#sh').classList.remove('open','full')}
 $('#sh').onclick=e=>{if(e.target.id==='sh')close()};
 
 function addSheet(){
-  const opts=()=>S[CK[type]].map(c=>`<option>${esc(c)}</option>`).join('');
+  const opts=()=>S[CK[type]].map(c=>`<option>${esc(c)}</option>`).join('')+`<option value="__new">${type==='v'?'+ Nuevo mercado…':'+ Nueva categoría…'}</option>`;
   open(`<h2>Nuevo movimiento</h2><div class="seg" style="margin-top:12px"><button id="tg" class="${type==='g'?'on':''}">Gasto</button><button id="ti" class="${type==='i'?'on':''}">Ingreso</button><button id="tv" class="${type==='v'?'on':''}">Inversión</button></div>
   <label for="am">Importe (€)</label><input id="am" type="number" inputmode="decimal" step="0.01">
-  <label for="ct">Categoría</label><select id="ct">${opts()}</select>
+  <label for="ct">${type==='v'?'Mercado':'Categoría'}</label><select id="ct">${opts()}</select><input id="ncat" maxlength="22" placeholder="${type==='v'?'Nombre del mercado (ej. S&amp;P 500)':'Nombre de la categoría'}" style="display:none;margin-top:8px">
   <label for="nt">Concepto (opcional)</label><input id="nt" maxlength="40">${type==='g'?`<label style="display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--ink);font-size:15px;margin-top:16px"><span>Cuenta para el límite<span class="mute small" style="display:block">Desactívalo en gastos puntuales (un vuelo, un pago a la familia...)</span></span><input id="cl" type="checkbox" checked style="width:24px;height:24px;padding:0;flex:none;accent-color:var(--ok)"></label>`:''}
   <label for="dt">Fecha</label><input id="dt" type="date" value="${cur===mk(today())?today():cur+'-'+pad(S.sd||1)}">
   <button class="pri" id="sv" style="width:100%;margin-top:16px">Guardar</button>`);
   $('#tg').onclick=()=>{type='g';addSheet()};$('#ti').onclick=()=>{type='i';addSheet()};$('#tv').onclick=()=>{type='v';addSheet()};
   $('#am').focus();
+  $('#ct').onchange=()=>{const n=$('#ct').value==='__new';$('#ncat').style.display=n?'block':'none';if(n)$('#ncat').focus()};
   $('#sv').onclick=()=>{const a=parseFloat($('#am').value);if(!(a>0)){$('#am').focus();return}
+    let cat=$('#ct').value;if(cat==='__new'){cat=$('#ncat').value.trim();if(!cat){$('#ncat').focus();return}const L=S[CK[type]];if(!L.includes(cat)){L.push(cat);colorFor(CK[type],cat)}}
     const d=$('#dt').value||today();
-    S.tx.push({id:Date.now(),d,t:type,a,c:$('#ct').value,n:$('#nt').value.trim(),...(type==='g'&&!$('#cl').checked?{nl:1}:{})});
+    S.tx.push({id:Date.now(),d,t:type,a,c:cat,n:$('#nt').value.trim(),...(type==='g'&&!$('#cl').checked?{nl:1}:{})});
     cur=mk(d);save();close();render()};
 }
 
@@ -211,8 +228,9 @@ function cfgSheet(){
   <label for="sd">Día en que empieza tu mes (cuando cobras)</label><div class="row"><input id="sd" type="number" inputmode="numeric" min="1" max="28" value="${S.sd||1}"><button id="ss">Guardar</button></div>
   <div class="mute small" style="margin-top:6px">Tu mes y tu límite van de ese día al anterior del mes siguiente. Pon 1 para meses naturales.</div>
   <label for="bk">Ajustar saldo del banco (€)</label><div class="row"><input id="bk" type="number" inputmode="decimal" value="${balance().toFixed(2)}"><button id="sb">Guardar</button></div>
+  <div style="margin-top:26px;font-weight:800">Metas de ahorro</div>${goalsBlock()}
   ${fxBlock()}
-  <div style="margin-top:26px;font-weight:800">Categorías</div>${catBlock('cats','Gastos')}${catBlock('catsI','Ingresos')}${catBlock('catsV','Inversiones')}
+  <div style="margin-top:26px;font-weight:800">Categorías</div>${catBlock('cats','Gastos')}${catBlock('catsI','Ingresos')}${catBlock('catsV','Mercados')}
   <div style="margin-top:26px;font-weight:800">Copia de seguridad</div>
   <div class="mute small" style="margin:6px 0 10px">Guarda una copia de tus datos para no perderlos si cambias de móvil o borras los datos del navegador.</div>
   <textarea id="bt" rows="3" readonly aria-label="Datos de la copia" style="font-size:12px"></textarea>
@@ -222,6 +240,8 @@ function cfgSheet(){
   <div class="row" style="margin-top:8px"><input id="bf" type="file" accept=".json,application/json" style="display:none"><button id="bl" style="flex:1">Elegir archivo</button><button class="pri" id="br" style="flex:1">Restaurar</button></div>
   <div style="margin-top:26px"><button class="link" id="rs">Borrar todos los datos</button></div>`);
   $('#sl').onclick=()=>{const v=parseFloat($('#lm').value);if(v>=0){S.limit=v;save();close();render()}};
+  document.querySelectorAll('[data-dg]').forEach(b=>b.onclick=()=>{S.goals=(S.goals||[]).filter(g=>g!==+b.dataset.dg);save();OPEN.gl=true;cfgSheet()});
+  document.querySelectorAll('[data-ag]').forEach(b=>b.onclick=()=>{const v=parseFloat($('#ng').value);if(v>0&&!(S.goals||[]).includes(v)){S.goals=(S.goals||[]).concat(v);save();OPEN.gl=true;cfgSheet()}else $('#ng').focus()});
   $('#ss').onclick=()=>{const v=parseInt($('#sd').value);if(v>=1&&v<=28){S.sd=v;cur=mk(today());shown=PAGE;save();close();render()}};
   document.querySelectorAll('[data-df]').forEach(b=>b.onclick=()=>{S.fx=FX().filter(f=>f.id!==b.dataset.df);save();cfgSheet()});
   document.querySelectorAll('[data-af]').forEach(b=>b.onclick=()=>{const n=$('#fn').value.trim(),a=parseFloat($('#fa').value),q=Math.max(1,parseInt($('#fq').value)||1);if(!n||!(a>0)){(n?$('#fa'):$('#fn')).focus();return}FX().push({id:'f'+Date.now(),n,a,q});save();OPEN.fxs=true;cfgSheet()});
@@ -244,5 +264,5 @@ function cfgSheet(){
   $('#rs').onclick=()=>{if(!$('#rs').dataset.a){$('#rs').dataset.a=1;$('#rs').textContent='Pulsa otra vez para borrar todo';return}S=null;mem=null;try{localStorage.removeItem(KEY)}catch(e){}close();render()};
 }
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
-S=load();if(S){cur=mk(today());FX();if(!S.fx.length&&!S.fxInit){S.fx=DFX.map(x=>({...x}));S.fxInit=1}if(!S.mg1){S.mg1=1;const c=S.fx.find(f=>f.id==='d9');if(c&&c.q===1)c.q=2}S.tx.forEach(t=>{if(t.t==='i'&&t.c==='Inversiones')t.t='v'});if(!S.catsI)S.catsI=[...DI];if(!S.catsV)S.catsV=[...DV];['cats','catsI','catsV'].forEach(k=>S[k].forEach(n=>colorFor(k,n)));save()}render();
+S=load();if(S){cur=mk(today());FX();if(!S.fx.length&&!S.fxInit){S.fx=DFX.map(x=>({...x}));S.fxInit=1}if(!S.og){S.og=1;S.goals=S.goals||[1000,2000,5000,10000]}if(!S.og2){S.og2=1;S.floor=0;S.fl=0;S.goals=[...new Set([...(S.goals||[]),1000,2000,5000,10000])]}if(!S.mg1){S.mg1=1;const c=S.fx.find(f=>f.id==='d9');if(c&&c.q===1)c.q=2}S.tx.forEach(t=>{if(t.t==='i'&&t.c==='Inversiones')t.t='v'});if(!S.catsI)S.catsI=[...DI];if(!S.catsV)S.catsV=[...DV];if(!S.mk2){S.mk2=1;if(JSON.stringify(S.catsV)===JSON.stringify(OLDV))S.catsV=[...DV]}['cats','catsI','catsV'].forEach(k=>S[k].forEach(n=>colorFor(k,n)));save()}render();
 </script></body></html>
