@@ -11,9 +11,9 @@
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 
 <style>
-:root{--bg:#F1F4F3;--card:#fff;--ink:#12263A;--mute:#5B6B79;--line:#DDE3E8;--ok:#0E7C66;--warn:#B7791F;--bad:#C0392B;--soft:#E6EEEC;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1A24;--card:#172633;--ink:#E8EEF3;--mute:#9AAAB8;--line:#2A3B4A;--ok:#3CC4A6;--warn:#E3B04B;--bad:#F07A6B;--soft:#1D3140}}
-:root[data-theme="dark"]{--bg:#0F1A24;--card:#172633;--ink:#E8EEF3;--mute:#9AAAB8;--line:#2A3B4A;--ok:#3CC4A6;--warn:#E3B04B;--bad:#F07A6B;--soft:#1D3140}
+:root{--bg:#F1F4F3;--card:#fff;--ink:#12263A;--mute:#5B6B79;--line:#DDE3E8;--ok:#0E7C66;--warn:#B7791F;--bad:#C0392B;--soft:#E6EEEC;--sb:#E3EBE9;--sbi:#12263A;--onok:#fff;--pb:#12263A;--pi:#F1F4F3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1A24;--card:#172633;--ink:#E8EEF3;--mute:#9AAAB8;--line:#2A3B4A;--ok:#3CC4A6;--warn:#E3B04B;--bad:#F07A6B;--soft:#1D3140;--sb:#F1F5F8;--sbi:#0F1A24;--onok:#08241E;--pb:#3CC4A6;--pi:#08241E}}
+:root[data-theme="dark"]{--bg:#0F1A24;--card:#172633;--ink:#E8EEF3;--mute:#9AAAB8;--line:#2A3B4A;--ok:#3CC4A6;--warn:#E3B04B;--bad:#F07A6B;--soft:#1D3140;--sb:#F1F5F8;--sbi:#0F1A24;--onok:#08241E;--pb:#3CC4A6;--pi:#08241E}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 Manrope,system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:520px;margin:0 auto;padding:18px 16px 60px}
@@ -23,16 +23,17 @@ h1,h2{margin:0;font-weight:800}
 .bal{font-size:40px;font-weight:800;letter-spacing:-1px;line-height:1.1}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px}
+button{cursor:pointer;border:1px solid transparent;background:var(--sb);color:var(--sbi);font-weight:600;border-radius:10px;padding:8px 12px}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
-.pri{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:600;padding:11px 16px}
+.pri{background:var(--pb);color:var(--pi);border-color:var(--pb);font-weight:600;padding:11px 16px}
+.pay{background:var(--ok);color:var(--onok)}
 input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
 label{display:block;font-size:13px;color:var(--mute);margin:16px 0 6px}
 .bar{height:12px;border-radius:6px;background:var(--soft);overflow:hidden;margin:10px 0 6px}
 .bar i{display:block;height:100%;border-radius:6px;background:var(--ok);transition:width .4s}
 .note{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--soft);border-left:4px solid var(--warn);font-size:13.5px}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.seg button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg button.on{background:var(--pb);color:var(--pi);border-color:var(--pb)}
 .cat{display:flex;align-items:center;gap:8px;margin:8px 0}
 .dot{width:10px;height:10px;border-radius:50%;flex:none}
 .cat .b{flex:1;height:6px;background:var(--soft);border-radius:3px}.cat .b i{display:block;height:100%;border-radius:3px}
@@ -112,7 +113,7 @@ function render(){
   const colorOf=c=>colorFor('cats',c);
   const fxL=FX(),fxN=f=>S.tx.filter(t=>t.fx===f.id&&mk(t.d)===cur).length;
   const fxSk=f=>!!(S.sk&&S.sk[cur+':'+f.id]),fxTot=fxL.filter(f=>!fxSk(f)).reduce((a,f)=>a+f.a*fxQ(f),0),fxPd=S.tx.filter(t=>t.fx&&mk(t.d)===cur).reduce((a,t)=>a+t.a,0);
-  const fxCard=`<details class="cg" data-g="fx"${OPEN.fx?' open':''}><summary><span>Pagos fijos</span><span class="rt"><span class="mute small">${fmt(fxPd)} de ${fmt(fxTot)}</span><i class="chev"></i></span></summary>${fxL.length?fxL.map(f=>{const n=fxN(f),q=fxQ(f),done=n>=q,sk=fxSk(f)&&!done;return `<div class="ci"><button class="rowb" data-fx="${f.id}" aria-label="Editar ${esc(f.n)}"><span class="nm"><span class="sw" style="background:${done?'var(--ok)':sk?'transparent':'var(--line)'}"></span><span>${esc(f.n)}<span class="mute small" style="display:flex;align-items:center;gap:8px">${fmt(f.a)}${q>1?`<span class="dots">${Array.from({length:q},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span>`:''}</span></span></span></button>${done?'<span class="g small">✓ Pagado</span>':sk?'<span class="mute small">Omitido</span>':`<button class="small" data-pay="${f.id}">Pagar</button>`}</div>`}).join(''):'<p class="mute small" style="padding:12px 14px;margin:0">Aún no tienes pagos fijos.</p>'}<div class="ca"><button id="fxadd" style="width:100%">+ Añadir pago fijo</button></div></details>`;
+  const fxCard=`<details class="cg" data-g="fx"${OPEN.fx?' open':''}><summary><span>Pagos fijos</span><span class="rt"><span class="mute small">${fmt(fxPd)} de ${fmt(fxTot)}</span><i class="chev"></i></span></summary>${fxL.length?fxL.map(f=>{const n=fxN(f),q=fxQ(f),done=n>=q,sk=fxSk(f)&&!done;return `<div class="ci"><button class="rowb" data-fx="${f.id}" aria-label="Editar ${esc(f.n)}"><span class="nm"><span class="sw" style="background:${done?'var(--ok)':sk?'transparent':'var(--line)'}"></span><span>${esc(f.n)}<span class="mute small" style="display:flex;align-items:center;gap:8px">${fmt(f.a)}${q>1?`<span class="dots">${Array.from({length:q},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span>`:''}</span></span></span></button>${done?'<span class="g small">✓ Pagado</span>':sk?'<span class="mute small">Omitido</span>':`<button class="small pay" data-pay="${f.id}">Pagar</button>`}</div>`}).join(''):'<p class="mute small" style="padding:12px 14px;margin:0">Aún no tienes pagos fijos.</p>'}<div class="ca"><button id="fxadd" style="width:100%">+ Añadir pago fijo</button></div></details>`;
   $('#app').innerHTML=`
   <div class="row"><div><div class="mute small">Dinero en el banco</div><div class="bal">${fmt(balance())}</div></div>
   <button id="cfg" aria-label="Ajustes">Ajustes</button></div>
