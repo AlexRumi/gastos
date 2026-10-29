@@ -71,6 +71,8 @@ label{display:block;font-size:13px;color:var(--mute);margin:16px 0 6px}
 .dots{display:inline-flex;gap:5px}
 .dots i{display:block;width:10px;height:10px;border-radius:50%;border:1.5px solid var(--mute)}
 .dots i.on{background:var(--ok);border-color:var(--ok)}
+.tx[data-ed]{cursor:pointer}
+.bang{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--bad);color:#fff;font-size:12px;font-weight:800;margin-left:8px}
 </style></head><body><main id="app"></main>
 
 <div class="sheet" id="sh"><div id="shc"></div></div>
@@ -100,6 +102,12 @@ function limitFor(key){let m=earliest(),lim=S.limit,ex=0;
   return{lim,ex}}
 const balance=()=>S.b0+S.tx.reduce((a,t)=>a+(t.t==='i'?t.a:-t.a),0);
 
+const fmtD=d=>d.slice(8)+'/'+d.slice(5,7)+'/'+d.slice(0,4);
+function bkDays(){return S&&S.lb?Math.floor((new Date(today())-new Date(S.lb))/864e5):null}
+function bkDue(){if(!S||!S.tx.length)return false;return S.lb?bkDays()>=(S.bk||7):true}
+function bkStatus(){return bkDue()?(S.lb?'Hace '+bkDays()+' días que no haces copia de seguridad.':'Aún no has hecho ninguna copia de seguridad.'):(S.lb?'Última copia: '+fmtD(S.lb):'')}
+function paintBk(){const e=$('#bks');if(!e)return;e.textContent=bkStatus();e.style.color=bkDue()?'var(--bad)':'var(--mute)'}
+function bkStamp(){S.lb=today();save();$('#bt').value=JSON.stringify(S);render();paintBk()}
 function objHtml(){const b=balance(),G=(S.goals||[]).slice().sort((x,y)=>x-y);
   if(!G.length)return '';
   S.gr=S.gr||[];let ch=false;G.forEach(g=>{if(b>=g&&!S.gr.includes(g)){S.gr.push(g);ch=true}});if(ch)save();
@@ -130,7 +138,7 @@ function render(){
   const fxCard=`<details class="cg" data-g="fx"${OPEN.fx?' open':''}><summary><span>Pagos fijos</span><span class="rt"><span class="mute small">${fmt(fxPd)} de ${fmt(fxTot)}</span><i class="chev"></i></span></summary>${fxL.length?fxL.map(f=>{const n=fxN(f),q=fxQ(f),done=n>=q,sk=fxSk(f)&&!done;return `<div class="ci"><button class="rowb" data-fx="${f.id}" aria-label="Editar ${esc(f.n)}"><span class="nm"><span class="sw" style="background:${done?'var(--ok)':sk?'transparent':'var(--line)'}"></span><span>${esc(f.n)}<span class="mute small" style="display:flex;align-items:center;gap:8px">${fmt(f.a)}${q>1?`<span class="dots">${Array.from({length:q},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span>`:''}</span></span></span></button>${done?'<span class="g small">✓ Pagado</span>':sk?'<span class="mute small">Omitido</span>':`<button class="small pay" data-pay="${f.id}">Pagar</button>`}</div>`}).join(''):'<p class="mute small" style="padding:12px 14px;margin:0">Aún no tienes pagos fijos.</p>'}<div class="ca"><button id="fxadd" style="width:100%">+ Añadir pago fijo</button></div></details>`;
   $('#app').innerHTML=`
   <div class="row"><div><div class="mute small">Dinero en el banco</div><div class="bal">${fmt(balance())}</div></div>
-  <button id="cfg" aria-label="Ajustes">Ajustes</button></div>
+  <button id="cfg" aria-label="Ajustes${bkDue()?' (copia de seguridad pendiente)':''}">Ajustes${bkDue()?'<span class="bang">!</span>':''}</button></div>
   ${objHtml()}
   <button class="pri" id="add" style="width:100%;margin-top:14px">Añadir movimiento</button>
 
@@ -153,11 +161,12 @@ function render(){
 
   ${cats.length?`<div class="card"><b>Gastos por categoría</b>${cats.map(([c,v])=>`<div class="cat"><span class="dot" style="background:${colorOf(c)}"></span><span style="width:104px">${esc(c)}</span><span class="b"><i style="width:${v/spT*100}%;background:${colorOf(c)}"></i></span><span class="small">${fmt(v)}</span></div>`).join('')}</div>`:''}
 
-  <div class="card" id="mv"><b>Movimientos</b>${mt.length?mt.slice(0,shown).map(t=>`<div class="tx"><span class="dot" style="background:${colorFor(CK[t.t],t.c)}"></span><div class="m"><div class="n">${esc(t.n||t.c)}</div><div class="mute small">${esc(t.c)} · ${t.d.slice(8)}/${t.d.slice(5,7)}${t.nl?' <span class="chip" style="margin:0 0 0 4px">Fuera del límite</span>':''}</div></div><span style="font-weight:600;color:${t.t==='g'?'var(--bad)':'var(--ok)'}">${t.t==='i'?'+':'−'}${fmt(t.a)}</span><button class="x" data-del="${t.id}" aria-label="Borrar">✕</button></div>`).join('')+(mt.length>PAGE&&(mt.length>shown||shown>PAGE)?`<div class="row" style="margin-top:10px">${mt.length>shown?`<button id="more" style="flex:1">Ver más (${mt.length-shown})</button>`:''}${shown>PAGE?`<button id="less" style="flex:1">Ver menos</button>`:''}</div>`:''):'<p class="mute">Sin movimientos este mes. Pulsa «Añadir movimiento».</p>'}</div>`;
+  <div class="card" id="mv"><b>Movimientos</b>${mt.length?mt.slice(0,shown).map(t=>`<div class="tx" data-ed="${t.id}"><span class="dot" style="background:${colorFor(CK[t.t],t.c)}"></span><div class="m"><div class="n">${esc(t.n||t.c)}</div><div class="mute small">${esc(t.c)} · ${t.d.slice(8)}/${t.d.slice(5,7)}${t.nl?' <span class="chip" style="margin:0 0 0 4px">Fuera del límite</span>':''}</div></div><span style="font-weight:600;color:${t.t==='g'?'var(--bad)':'var(--ok)'}">${t.t==='i'?'+':'−'}${fmt(t.a)}</span><button class="x" data-del="${t.id}" aria-label="Borrar">✕</button></div>`).join('')+(mt.length>PAGE&&(mt.length>shown||shown>PAGE)?`<div class="row" style="margin-top:10px">${mt.length>shown?`<button id="more" style="flex:1">Ver más (${mt.length-shown})</button>`:''}${shown>PAGE?`<button id="less" style="flex:1">Ver menos</button>`:''}</div>`:''):'<p class="mute">Sin movimientos este mes. Pulsa «Añadir movimiento».</p>'}</div>`;
   $('#pv').onclick=()=>{cur=shift(cur,-1);shown=PAGE;render()};
   $('#nx').onclick=()=>{cur=shift(cur,1);shown=PAGE;render()};
-  $('#add').onclick=addSheet;$('#edl').onclick=$('#cfg').onclick=cfgSheet;if($('#more'))$('#more').onclick=()=>{shown+=PAGE;render()};if($('#less'))$('#less').onclick=()=>{shown=PAGE;render();$('#mv').scrollIntoView({block:'center'})};
+  $('#add').onclick=()=>addSheet();$('#edl').onclick=$('#cfg').onclick=cfgSheet;if($('#more'))$('#more').onclick=()=>{shown+=PAGE;render()};if($('#less'))$('#less').onclick=()=>{shown=PAGE;render();$('#mv').scrollIntoView({block:'center'})};
   document.querySelectorAll('details.cg').forEach(d=>d.ontoggle=()=>{OPEN[d.dataset.g]=d.open});
+  document.querySelectorAll('[data-ed]').forEach(r=>r.onclick=e=>{if(e.target.closest('[data-del]'))return;addSheet(r.dataset.ed)});
   document.querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>fxSheet(b.dataset.fx));
   if($('#fxadd'))$('#fxadd').onclick=()=>fxSheet(null);
   document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=()=>{const f=FX().find(x=>x.id===b.dataset.pay);if(!f)return;if(!S.cats.includes(FC))S.cats.push(FC);S.tx.push({id:Date.now(),d:cur===mk(today())?today():cur+'-'+pad(S.sd||1),t:'g',a:f.a,c:FC,n:f.n,nl:1,fx:f.id});save();render()});
@@ -187,21 +196,24 @@ function open(h){$('#shc').innerHTML=h;$('#sh').classList.add('open')}
 function close(){$('#sh').classList.remove('open','full')}
 $('#sh').onclick=e=>{if(e.target.id==='sh')close()};
 
-function addSheet(){
-  const opts=()=>S[CK[type]].map(c=>`<option>${esc(c)}</option>`).join('')+`<option value="__new">${type==='v'?'+ Nuevo mercado…':'+ Nueva categoría…'}</option>`;
-  open(`<h2>Nuevo movimiento</h2><div class="seg" style="margin-top:12px"><button id="tg" class="${type==='g'?'on':''}">Gasto</button><button id="ti" class="${type==='i'?'on':''}">Ingreso</button><button id="tv" class="${type==='v'?'on':''}">Inversión</button></div>
-  <label for="am">Importe (€)</label><input id="am" type="number" inputmode="decimal" step="0.01">
+function addSheet(eid){
+  const E=eid?S.tx.find(t=>String(t.id)===String(eid)):null;if(E)type=E.t;
+  const lst=()=>{const L=S[CK[type]].slice();if(E&&!L.includes(E.c))L.push(E.c);return L};
+  const opts=()=>lst().map(c=>`<option${E&&E.c===c?' selected':''}>${esc(c)}</option>`).join('')+`<option value="__new">${type==='v'?'+ Nuevo mercado…':'+ Nueva categoría…'}</option>`;
+  open(`<h2>${E?'Editar movimiento':'Nuevo movimiento'}</h2>${E?'':`<div class="seg" style="margin-top:12px"><button id="tg" class="${type==='g'?'on':''}">Gasto</button><button id="ti" class="${type==='i'?'on':''}">Ingreso</button><button id="tv" class="${type==='v'?'on':''}">Inversión</button></div>`}
+  <label for="am">Importe (€)</label><input id="am" type="number" inputmode="decimal" step="0.01" value="${E?E.a:''}">
   <label for="ct">${type==='v'?'Mercado':'Categoría'}</label><select id="ct">${opts()}</select><input id="ncat" maxlength="22" placeholder="${type==='v'?'Nombre del mercado (ej. S&amp;P 500)':'Nombre de la categoría'}" style="display:none;margin-top:8px">
-  <label for="nt">Concepto (opcional)</label><input id="nt" maxlength="40">${type==='g'?`<label style="display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--ink);font-size:15px;margin-top:16px"><span>Cuenta para el límite<span class="mute small" style="display:block">Desactívalo en gastos puntuales (un vuelo, un pago a la familia...)</span></span><input id="cl" type="checkbox" checked style="width:24px;height:24px;padding:0;flex:none;accent-color:var(--ok)"></label>`:''}
-  <label for="dt">Fecha</label><input id="dt" type="date" value="${cur===mk(today())?today():cur+'-'+pad(S.sd||1)}">
-  <button class="pri" id="sv" style="width:100%;margin-top:16px">Guardar</button>`);
-  $('#tg').onclick=()=>{type='g';addSheet()};$('#ti').onclick=()=>{type='i';addSheet()};$('#tv').onclick=()=>{type='v';addSheet()};
+  <label for="nt">Concepto (opcional)</label><input id="nt" maxlength="40" value="${E?esc(E.n||''):''}">${type==='g'?`<label style="display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--ink);font-size:15px;margin-top:16px"><span>Cuenta para el límite<span class="mute small" style="display:block">Desactívalo en gastos puntuales (un vuelo, un pago a la familia...)</span></span><input id="cl" type="checkbox"${E&&E.nl?'':' checked'} style="width:24px;height:24px;padding:0;flex:none;accent-color:var(--ok)"></label>`:''}
+  <label for="dt">Fecha</label><input id="dt" type="date" value="${E?E.d:cur===mk(today())?today():cur+'-'+pad(S.sd||1)}">
+  <button class="pri" id="sv" style="width:100%;margin-top:16px">${E?'Guardar cambios':'Guardar'}</button>`);
+  if(!E){$('#tg').onclick=()=>{type='g';addSheet()};$('#ti').onclick=()=>{type='i';addSheet()};$('#tv').onclick=()=>{type='v';addSheet()}}
   $('#am').focus();
   $('#ct').onchange=()=>{const n=$('#ct').value==='__new';$('#ncat').style.display=n?'block':'none';if(n)$('#ncat').focus()};
   $('#sv').onclick=()=>{const a=parseFloat($('#am').value);if(!(a>0)){$('#am').focus();return}
     let cat=$('#ct').value;if(cat==='__new'){cat=$('#ncat').value.trim();if(!cat){$('#ncat').focus();return}const L=S[CK[type]];if(!L.includes(cat)){L.push(cat);colorFor(CK[type],cat)}}
     const d=$('#dt').value||today();
-    S.tx.push({id:Date.now(),d,t:type,a,c:cat,n:$('#nt').value.trim(),...(type==='g'&&!$('#cl').checked?{nl:1}:{})});
+    if(E){E.a=a;E.c=cat;E.n=$('#nt').value.trim();E.d=d;if(type==='g'){if($('#cl').checked)delete E.nl;else E.nl=1}type='g'}
+    else S.tx.push({id:Date.now(),d,t:type,a,c:cat,n:$('#nt').value.trim(),...(type==='g'&&!$('#cl').checked?{nl:1}:{})});
     cur=mk(d);save();close();render()};
 }
 
@@ -233,6 +245,9 @@ function cfgSheet(){
   <div style="margin-top:26px;font-weight:800">Categorías</div>${catBlock('cats','Gastos')}${catBlock('catsI','Ingresos')}${catBlock('catsV','Mercados')}
   <div style="margin-top:26px;font-weight:800">Copia de seguridad</div>
   <div class="mute small" style="margin:6px 0 10px">Guarda una copia de tus datos para no perderlos si cambias de móvil o borras los datos del navegador.</div>
+  <div id="bks" class="small" style="margin-bottom:6px;font-weight:600"></div>
+  <label for="bkd" style="margin-top:6px">Recordarme la copia cada</label><select id="bkd">${[3,7,14].map(n=>`<option value="${n}"${(S.bk||7)===n?' selected':''}>${n} días</option>`).join('')}</select>
+  <div style="height:10px"></div>
   <textarea id="bt" rows="3" readonly aria-label="Datos de la copia" style="font-size:12px"></textarea>
   <div class="row" style="margin-top:8px"><button id="bc" style="flex:1">Copiar</button><button id="bd" style="flex:1">Descargar</button></div>
   <label for="bi">Restaurar una copia</label>
@@ -254,8 +269,9 @@ function cfgSheet(){
   document.querySelectorAll('[data-rc]').forEach(b=>b.onclick=()=>{const k=b.dataset.k;if(S[k].length>1){S[k]=S[k].filter(c=>c!==b.dataset.rc);save();cfgSheet()}});
   $('#sh').classList.add('full');$('#xc').onclick=close;
   $('#bt').value=JSON.stringify(S);
-  $('#bc').onclick=async()=>{$('#bt').select();try{await navigator.clipboard.writeText($('#bt').value);$('#bc').textContent='Copiado'}catch(e){try{document.execCommand('copy');$('#bc').textContent='Copiado'}catch(_){}}};
-  $('#bd').onclick=()=>{try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('#bt').value],{type:'application/json'}));a.download='gastos-'+today()+'.json';a.click()}catch(e){}};
+  $('#bc').onclick=async()=>{const old=S.lb;bkStamp();$('#bt').select();let ok=false;try{await navigator.clipboard.writeText($('#bt').value);ok=true}catch(e){try{ok=document.execCommand('copy')}catch(_){}}if(ok)$('#bc').textContent='Copiado';else{S.lb=old;save();render();paintBk();$('#bc').textContent='No se pudo copiar'}};
+  $('#bd').onclick=()=>{const old=S.lb;bkStamp();try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([$('#bt').value],{type:'application/json'}));a.download='gastos-'+today()+'.json';a.click();$('#bd').textContent='Descargado'}catch(e){S.lb=old;save();render();paintBk()}};
+  $('#bkd').onchange=()=>{S.bk=+$('#bkd').value;save();paintBk();render()};paintBk();
   $('#bl').onclick=()=>$('#bf').click();
   $('#bf').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('#bi').value=r.result};r.readAsText(f)};
   $('#br').onclick=()=>{let d;try{d=JSON.parse($('#bi').value);if(!d||!Array.isArray(d.tx)||typeof d.b0!=='number')throw 0}catch(e){$('#br').textContent='Datos no válidos';return}
