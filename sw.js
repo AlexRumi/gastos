@@ -1,6 +1,6 @@
 // Service worker: guarda la app en el móvil para usarla sin conexión.
 // Con conexión siempre pide la versión más nueva; sin conexión usa la guardada.
-const V = 'gastos-v5';
+const V = 'gastos-v6';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => c.addAll(FILES)).then(() => self.skipWaiting()));
