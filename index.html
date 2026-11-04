@@ -23,7 +23,7 @@ h1,h2{margin:0;font-weight:800}
 .bal{font-size:40px;font-weight:800;letter-spacing:-1px;line-height:1.1}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 button,input,select,textarea{font:inherit;color:inherit}
-button{cursor:pointer;border:1px solid transparent;background:var(--sb);color:var(--sbi);font-weight:600;border-radius:10px;padding:8px 12px}
+button{cursor:pointer;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px}
 button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--ok);outline-offset:2px}
 .pri{background:var(--pb);color:var(--pi);border-color:var(--pb);font-weight:600;padding:11px 16px}
 .pay{background:var(--ok);color:var(--onok)}
@@ -73,6 +73,12 @@ label{display:block;font-size:13px;color:var(--mute);margin:16px 0 6px}
 .dots i.on{background:var(--ok);border-color:var(--ok)}
 .tx[data-ed]{cursor:pointer}
 .bang{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--bad);color:#fff;font-size:12px;font-weight:800;margin-left:8px}
+.b2{display:block;height:6px;background:var(--soft);border-radius:3px;margin-top:6px}
+.b2 i{display:block;height:100%;border-radius:3px;background:var(--ok)}
+.wb{background:var(--sb);color:var(--sbi);font-weight:600;border-color:transparent}
+.ib{position:relative;width:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:50%}
+.ib.sm{width:34px;height:34px}
+.ib .bang{position:absolute;top:-5px;right:-5px;margin:0}
 </style></head><body><main id="app"></main>
 
 <div class="sheet" id="sh"><div id="shc"></div></div>
@@ -91,7 +97,7 @@ const shift=(k,n)=>{const[y,m]=k.split('-').map(Number);const d=new Date(y,m-1+n
 const label=k=>{const[y,m]=k.split('-').map(Number),sd=S&&S.sd||1;if(sd===1)return new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});const f=d=>d.toLocaleDateString('es-ES',{day:'numeric',month:'short'});return f(new Date(y,m-1,sd))+' – '+f(new Date(y,m,sd-1))};
 const PAL=['#0E7C66','#2F6DB5','#B7791F','#8E5BB5','#C0392B','#3C8D93','#7A8B3A','#B5527A','#E07A2F','#4A5FC1','#2E9E5B','#8C6D4F','#D1477A','#5E7C8A','#A3A12B','#6B4FA0'];
 function colorFor(k,n){if(!S.cc)S.cc={};const key=k+':'+n;if(!S.cc[key]){const u=Object.keys(S.cc).filter(a=>a.startsWith(k+':')).map(a=>S.cc[a]);S.cc[key]=PAL.find(c=>!u.includes(c))||PAL[u.length%PAL.length];save()}return S.cc[key]}
-const CK={g:'cats',i:'catsI',v:'catsV'},DI=['Nómina','Extra','Rendimientos'],DV=['S&P 500','MSCI World','Bitcoin','Otros'],OLDV=['Fondo indexado','Acciones / ETF','Criptomonedas','Plan de pensiones','Otros'];
+const CK={g:'cats',i:'catsI',v:'catsV'},DI=['Nómina','Gildas','Extra','Rendimientos'],DV=['S&P 500','MSCI World','Bitcoin','Otros'],OLDV=['Fondo indexado','Acciones / ETF','Criptomonedas','Plan de pensiones','Otros'];
 const FC='Pagos fijos',FX=()=>S.fx||(S.fx=[]),fxQ=f=>(S.qo&&S.qo[cur+':'+f.id])||f.q,DFX=[{id:'d1',n:'Atresplayer',a:9.99,q:1},{id:'d2',n:'Gimnasio',a:33.49,q:1},{id:'d3',n:'DAZN',a:19.99,q:1},{id:'d4',n:'PlayStation Plus',a:13.99,q:1},{id:'d5',n:'Ionos',a:1.21,q:1},{id:'d6',n:'Shopify',a:10,q:1},{id:'d7',n:'Spotify',a:3.6,q:1},{id:'d8',n:'Amazon Prime',a:4.99,q:1},{id:'d9',n:'Depilación de cejas',a:5,q:2},{id:'d10',n:'Pelado',a:13,q:2}];
 let cur=mk(today()),type='g',shown=5;const PAGE=5;
 
@@ -102,6 +108,25 @@ function limitFor(key){let m=earliest(),lim=S.limit,ex=0;
   return{lim,ex}}
 const balance=()=>S.b0+S.tx.reduce((a,t)=>a+(t.t==='i'?t.a:-t.a),0);
 
+const GC='Gildas';
+const IC={gear:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+pen:'<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>'};
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const wk=s=>{const[y,m,d]=s.split('-').map(Number),t=new Date(y,m-1,d);t.setDate(t.getDate()-(t.getDay()+6)%7);return ymd(t)};
+const wkLabel=k=>{const[y,m,d]=k.split('-').map(Number),f=x=>x.toLocaleDateString('es-ES',{day:'numeric',month:'short'});return f(new Date(y,m-1,d))+' – '+f(new Date(y,m-1,d+6))};
+const mLabel=k=>{const[y,m]=k.split('-').map(Number),s=new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});return s.charAt(0).toUpperCase()+s.slice(1)};
+function gildaCard(){
+  const L=S.tx.filter(t=>t.t==='i'&&t.c===GC),sum=a=>a.reduce((x,t)=>x+t.a,0),t0=today(),w0=wk(t0),m0=t0.slice(0,7);
+  const thisW=sum(L.filter(t=>wk(t.d)===w0)),thisM=sum(L.filter(t=>t.d.slice(0,7)===m0));
+  const byM={},byW={};L.forEach(t=>{const m=t.d.slice(0,7),w=wk(t.d);byM[m]=(byM[m]||0)+t.a;byW[w]=(byW[w]||0)+t.a});
+  const ms=Object.keys(byM).sort().reverse(),ws=Object.keys(byW).sort().reverse(),w12=ws.slice(0,12);
+  const mxM=Math.max(1,...ms.map(k=>byM[k])),mxW=Math.max(1,...w12.map(k=>byW[k])),years=[...new Set(ms.map(k=>k.slice(0,4)))];
+  const row=(l,v,mx)=>`<div class="ci"><span style="flex:1;min-width:0;padding-right:12px"><span>${l}</span><span class="b2"><i style="width:${v/mx*100}%"></i></span></span><b>${fmt(v)}</b></div>`;
+  const stat=(t,v,s)=>`<div style="background:var(--bg);border-radius:10px;padding:10px 12px"><div class="mute small">${t}</div><div style="font-size:20px;font-weight:800;color:${v>0?'var(--ok)':'var(--ink)'}">${fmt(v)}</div><div class="mute small">${s}</div></div>`;
+  const det=(g,t,n,body)=>`<details class="cg" data-g="${g}"${OPEN[g]?' open':''}><summary><span>${t}</span><span class="rt"><span class="mute small">${n}</span><i class="chev"></i></span></summary>${body}</details>`;
+  return `<div class="card"><div class="row"><b>Cobros de Gildas</b><span class="chip">Total ${fmt(sum(L))}</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">${stat('Esta semana',thisW,wkLabel(w0))}${stat('Este mes',thisM,mLabel(m0))}</div>
+  ${L.length?det('gm','Por mes',ms.length,years.map(y=>`<div class="mute small" style="padding:8px 14px 2px;background:var(--bg)">${y}: total ${fmt(ms.filter(k=>k.startsWith(y)).reduce((a,k)=>a+byM[k],0))}</div>`+ms.filter(k=>k.startsWith(y)).map(k=>row(mLabel(k),byM[k],mxM)).join('')).join(''))+det('gw','Por semana',ws.length,w12.map(k=>row(wkLabel(k),byW[k],mxW)).join('')):`<p class="mute small" style="margin:10px 0 0">Apunta un ingreso con la categoría Gildas y aparecerá aquí, por semana y por mes.</p>`}</div>`}
 const fmtD=d=>d.slice(8)+'/'+d.slice(5,7)+'/'+d.slice(0,4);
 function bkDays(){return S&&S.lb?Math.floor((new Date(today())-new Date(S.lb))/864e5):null}
 function bkDue(){if(!S||!S.tx.length)return false;return S.lb?bkDays()>=(S.bk||7):true}
@@ -135,17 +160,17 @@ function render(){
   const colorOf=c=>colorFor('cats',c);
   const fxL=FX(),fxN=f=>S.tx.filter(t=>t.fx===f.id&&mk(t.d)===cur).length;
   const fxSk=f=>!!(S.sk&&S.sk[cur+':'+f.id]),fxTot=fxL.filter(f=>!fxSk(f)).reduce((a,f)=>a+f.a*fxQ(f),0),fxPd=S.tx.filter(t=>t.fx&&mk(t.d)===cur).reduce((a,t)=>a+t.a,0);
-  const fxCard=`<details class="cg" data-g="fx"${OPEN.fx?' open':''}><summary><span>Pagos fijos</span><span class="rt"><span class="mute small">${fmt(fxPd)} de ${fmt(fxTot)}</span><i class="chev"></i></span></summary>${fxL.length?fxL.map(f=>{const n=fxN(f),q=fxQ(f),done=n>=q,sk=fxSk(f)&&!done;return `<div class="ci"><button class="rowb" data-fx="${f.id}" aria-label="Editar ${esc(f.n)}"><span class="nm"><span class="sw" style="background:${done?'var(--ok)':sk?'transparent':'var(--line)'}"></span><span>${esc(f.n)}<span class="mute small" style="display:flex;align-items:center;gap:8px">${fmt(f.a)}${q>1?`<span class="dots">${Array.from({length:q},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span>`:''}</span></span></span></button>${done?'<span class="g small">✓ Pagado</span>':sk?'<span class="mute small">Omitido</span>':`<button class="small pay" data-pay="${f.id}">Pagar</button>`}</div>`}).join(''):'<p class="mute small" style="padding:12px 14px;margin:0">Aún no tienes pagos fijos.</p>'}<div class="ca"><button id="fxadd" style="width:100%">+ Añadir pago fijo</button></div></details>`;
+  const fxCard=`<details class="cg" data-g="fx"${OPEN.fx?' open':''}><summary><span>Pagos fijos</span><span class="rt"><span class="mute small">${fmt(fxPd)} de ${fmt(fxTot)}</span><i class="chev"></i></span></summary>${fxL.length?fxL.map(f=>{const n=fxN(f),q=fxQ(f),done=n>=q,sk=fxSk(f)&&!done;return `<div class="ci"><button class="rowb" data-fx="${f.id}" aria-label="Editar ${esc(f.n)}"><span class="nm"><span class="sw" style="background:${done?'var(--ok)':sk?'transparent':'var(--line)'}"></span><span>${esc(f.n)}<span class="mute small" style="display:flex;align-items:center;gap:8px">${fmt(f.a)}${q>1?`<span class="dots">${Array.from({length:q},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span>`:''}</span></span></span></button>${done?'<span class="g small">✓ Pagado</span>':sk?'<span class="mute small">Omitido</span>':`<button class="small pay" data-pay="${f.id}">Pagar</button>`}</div>`}).join(''):'<p class="mute small" style="padding:12px 14px;margin:0">Aún no tienes pagos fijos.</p>'}<div class="ca"><button id="fxadd" class="wb" style="width:100%">+ Añadir pago fijo</button></div></details>`;
   $('#app').innerHTML=`
   <div class="row"><div><div class="mute small">Dinero en el banco</div><div class="bal">${fmt(balance())}</div></div>
-  <button id="cfg" aria-label="Ajustes${bkDue()?' (copia de seguridad pendiente)':''}">Ajustes${bkDue()?'<span class="bang">!</span>':''}</button></div>
+  <button id="cfg" class="ib" title="Ajustes" aria-label="Ajustes${bkDue()?' (copia de seguridad pendiente)':''}">${IC.gear}${bkDue()?'<span class="bang">!</span>':''}</button></div>
   ${objHtml()}
   <button class="pri" id="add" style="width:100%;margin-top:14px">Añadir movimiento</button>
 
   <div class="row" style="margin-top:18px"><button id="pv" aria-label="Mes anterior">‹</button><h2 style="text-transform:capitalize">${label(cur)}</h2><button id="nx" aria-label="Mes siguiente">›</button></div>
   <div class="small" style="text-align:center;margin-top:8px"><b style="color:${inc>0?'var(--ok)':'var(--ink)'}">${inc>0?'+':''}${fmt(inc)}</b> <span class="mute">ingresos</span>&emsp;<b style="color:${spT>0?'var(--bad)':'var(--ink)'}">${spT>0?'−':''}${fmt(spT)}</b> <span class="mute">gastos</span></div>
 
-  <div class="card"><div class="row"><b>Límite de gasto</b><button id="edl" class="small">Ajustar</button></div>
+  <div class="card"><div class="row"><b>Límite de gasto</b><button id="edl" class="ib sm" title="Ajustar límite" aria-label="Ajustar límite">${IC.pen}</button></div>
    <div style="margin-top:6px"><span style="font-size:26px;font-weight:800;color:${sp>0?col:'var(--ink)'}">${fmt(sp)}</span> <span class="mute">de ${fmt(lim)}</span></div>
    <div class="bar"><i style="width:${pct}%;background:${col}"></i></div>
    <div class="small ${over?'':'mute'}" style="${over?'color:var(--bad);font-weight:600':''}">${over?'Te has pasado '+fmt(-left):'Te quedan '+fmt(left)}</div>${spT>sp?`<div class="small mute" style="margin-top:6px">Gastos fuera del límite este mes: ${fmt(spT-sp)}</div>`:''}
@@ -161,7 +186,9 @@ function render(){
 
   ${cats.length?`<div class="card"><b>Gastos por categoría</b>${cats.map(([c,v])=>`<div class="cat"><span class="dot" style="background:${colorOf(c)}"></span><span style="width:104px">${esc(c)}</span><span class="b"><i style="width:${v/spT*100}%;background:${colorOf(c)}"></i></span><span class="small">${fmt(v)}</span></div>`).join('')}</div>`:''}
 
-  <div class="card" id="mv"><b>Movimientos</b>${mt.length?mt.slice(0,shown).map(t=>`<div class="tx" data-ed="${t.id}"><span class="dot" style="background:${colorFor(CK[t.t],t.c)}"></span><div class="m"><div class="n">${esc(t.n||t.c)}</div><div class="mute small">${esc(t.c)} · ${t.d.slice(8)}/${t.d.slice(5,7)}${t.nl?' <span class="chip" style="margin:0 0 0 4px">Fuera del límite</span>':''}</div></div><span style="font-weight:600;color:${t.t==='g'?'var(--bad)':'var(--ok)'}">${t.t==='i'?'+':'−'}${fmt(t.a)}</span><button class="x" data-del="${t.id}" aria-label="Borrar">✕</button></div>`).join('')+(mt.length>PAGE&&(mt.length>shown||shown>PAGE)?`<div class="row" style="margin-top:10px">${mt.length>shown?`<button id="more" style="flex:1">Ver más (${mt.length-shown})</button>`:''}${shown>PAGE?`<button id="less" style="flex:1">Ver menos</button>`:''}</div>`:''):'<p class="mute">Sin movimientos este mes. Pulsa «Añadir movimiento».</p>'}</div>`;
+  ${gildaCard()}
+
+  <div class="card" id="mv"><b>Movimientos</b>${mt.length?mt.slice(0,shown).map(t=>`<div class="tx" data-ed="${t.id}"><span class="dot" style="background:${colorFor(CK[t.t],t.c)}"></span><div class="m"><div class="n">${esc(t.n||t.c)}</div><div class="mute small">${esc(t.c)} · ${t.d.slice(8)}/${t.d.slice(5,7)}${t.nl?' <span class="chip" style="margin:0 0 0 4px">Fuera del límite</span>':''}</div></div><span style="font-weight:600;color:${t.t==='g'?'var(--bad)':'var(--ok)'}">${t.t==='i'?'+':'−'}${fmt(t.a)}</span><button class="x" data-del="${t.id}" aria-label="Borrar">✕</button></div>`).join('')+(mt.length>PAGE&&(mt.length>shown||shown>PAGE)?`<div class="row" style="margin-top:10px">${mt.length>shown?`<button id="more" class="wb" style="flex:1">Ver más (${mt.length-shown})</button>`:''}${shown>PAGE?`<button id="less" class="wb" style="flex:1">Ver menos</button>`:''}</div>`:''):'<p class="mute">Sin movimientos este mes. Pulsa «Añadir movimiento».</p>'}</div>`;
   $('#pv').onclick=()=>{cur=shift(cur,-1);shown=PAGE;render()};
   $('#nx').onclick=()=>{cur=shift(cur,1);shown=PAGE;render()};
   $('#add').onclick=()=>addSheet();$('#edl').onclick=$('#cfg').onclick=cfgSheet;if($('#more'))$('#more').onclick=()=>{shown+=PAGE;render()};if($('#less'))$('#less').onclick=()=>{shown=PAGE;render();$('#mv').scrollIntoView({block:'center'})};
@@ -280,5 +307,5 @@ function cfgSheet(){
   $('#rs').onclick=()=>{if(!$('#rs').dataset.a){$('#rs').dataset.a=1;$('#rs').textContent='Pulsa otra vez para borrar todo';return}S=null;mem=null;try{localStorage.removeItem(KEY)}catch(e){}close();render()};
 }
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
-S=load();if(S){cur=mk(today());FX();if(!S.fx.length&&!S.fxInit){S.fx=DFX.map(x=>({...x}));S.fxInit=1}if(!S.og){S.og=1;S.goals=S.goals||[1000,2000,5000,10000]}if(!S.og2){S.og2=1;S.floor=0;S.fl=0;S.goals=[...new Set([...(S.goals||[]),1000,2000,5000,10000])]}if(!S.mg1){S.mg1=1;const c=S.fx.find(f=>f.id==='d9');if(c&&c.q===1)c.q=2}S.tx.forEach(t=>{if(t.t==='i'&&t.c==='Inversiones')t.t='v'});if(!S.catsI)S.catsI=[...DI];if(!S.catsV)S.catsV=[...DV];if(!S.mk2){S.mk2=1;if(JSON.stringify(S.catsV)===JSON.stringify(OLDV))S.catsV=[...DV]}['cats','catsI','catsV'].forEach(k=>S[k].forEach(n=>colorFor(k,n)));save()}render();
+S=load();if(S){cur=mk(today());FX();if(!S.fx.length&&!S.fxInit){S.fx=DFX.map(x=>({...x}));S.fxInit=1}if(!S.og){S.og=1;S.goals=S.goals||[1000,2000,5000,10000]}if(!S.og2){S.og2=1;S.floor=0;S.fl=0;S.goals=[...new Set([...(S.goals||[]),1000,2000,5000,10000])]}if(!S.mg1){S.mg1=1;const c=S.fx.find(f=>f.id==='d9');if(c&&c.q===1)c.q=2}S.tx.forEach(t=>{if(t.t==='i'&&t.c==='Inversiones')t.t='v'});if(!S.catsI)S.catsI=[...DI];if(!S.gc1){S.gc1=1;if(!S.catsI.includes(GC))S.catsI.splice(1,0,GC)}if(!S.catsV)S.catsV=[...DV];if(!S.mk2){S.mk2=1;if(JSON.stringify(S.catsV)===JSON.stringify(OLDV))S.catsV=[...DV]}['cats','catsI','catsV'].forEach(k=>S[k].forEach(n=>colorFor(k,n)));save()}render();
 </script></body></html>
