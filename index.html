@@ -79,6 +79,8 @@ label{display:block;font-size:13px;color:var(--mute);margin:16px 0 6px}
 .ib{position:relative;width:40px;height:40px;padding:0;display:grid;place-items:center;border-radius:50%}
 .ib.sm{width:34px;height:34px}
 .ib .bang{position:absolute;top:-5px;right:-5px;margin:0}
+.ib.xs{width:26px;height:26px;font-size:17px;line-height:1}
+button:disabled{opacity:.35;cursor:default}
 </style></head><body><main id="app"></main>
 
 <div class="sheet" id="sh"><div id="shc"></div></div>
@@ -115,18 +117,47 @@ const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const wk=s=>{const[y,m,d]=s.split('-').map(Number),t=new Date(y,m-1,d);t.setDate(t.getDate()-(t.getDay()+6)%7);return ymd(t)};
 const wkLabel=k=>{const[y,m,d]=k.split('-').map(Number),f=x=>x.toLocaleDateString('es-ES',{day:'numeric',month:'short'});return f(new Date(y,m-1,d))+' – '+f(new Date(y,m-1,d+6))};
 const mLabel=k=>{const[y,m]=k.split('-').map(Number),s=new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'});return s.charAt(0).toUpperCase()+s.slice(1)};
+const PG={};
+const pgr=(key,arr,fn)=>{const n=PG[key]||5;return arr.slice(0,n).map(fn).join('')+(arr.length>5?`<div class="row" style="padding:10px 14px">${arr.length>n?`<button class="wb" data-pm="${key}" style="flex:1">Ver más (${arr.length-n})</button>`:''}${n>5?`<button class="wb" data-pl="${key}" style="flex:1">Ver menos</button>`:''}</div>`:'')};
+const mName=k=>{const[y,m]=k.split('-').map(Number),s=new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long'});return s.charAt(0).toUpperCase()+s.slice(1)};
+const yrDet=(g,y,total,body,dflt)=>{const o=OPEN[g]===undefined?dflt:OPEN[g];return `<details class="cg" data-g="${g}"${o?' open':''}><summary><span>${y}</span><span class="rt"><span class="mute small">Total ${fmt(total)}</span><i class="chev"></i></span></summary>${body}</details>`};
+function seedSample(){let id=Date.now(),net=0;
+  const A=(d,t,a,c,n)=>{S.tx.push({id:id++,d,t,a,c,n:n||'',ex:1});net+=t==='i'?a:-a};
+  let i=0;for(const d=new Date(2026,1,2);d<=new Date(2027,0,31);d.setDate(d.getDate()+7),i++){
+    const y=d.getFullYear(),m=d.getMonth(),dd=d.getDate();
+    A(ymd(new Date(y,m,dd+5)),'i',140+((i*53)%230),GC,'Mercado');
+    if(i%3===0)A(ymd(new Date(y,m,dd+4)),'i',60+((i*37)%90),GC,'Pedido online')}
+  ['S&P 500','Bitcoin'].forEach(m=>{if(!S.catsV.includes(m))S.catsV.push(m)});
+  A('2026-12-25','v',150,'S&P 500','Inversión inicial');A('2027-01-25','v',50,'S&P 500');A('2027-01-26','v',50,'Bitcoin');
+  S.b0-=net}
+let gSel=null;
+const PD=()=>S&&S.pd!=null?S.pd:6;
+const lastDay=m=>{const[y,mo]=m.split('-').map(Number);return new Date(y,mo,0).getDate()};
+const addD=(s,n)=>{const[y,m,d]=s.split('-').map(Number);return ymd(new Date(y,m-1,d+n))};
+const pday=s=>{const[y,m,d]=s.split('-').map(Number);return addD(s,(PD()-new Date(y,m-1,d).getDay()+7)%7)};
+const firstPay=m=>(PD()-new Date(+m.slice(0,4),+m.slice(5,7)-1,1).getDay()+7)%7+1;
+const nW=m=>Math.floor((lastDay(m)-firstPay(m))/7)+1;
+const payOf=(m,w)=>m+'-'+pad(firstPay(m)+7*(w-1));
+const wIdx=ds=>Math.floor((+ds.slice(8)-1)/7)+1;
+const fShort=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString('es-ES',{day:'numeric',month:'short'})};
+function gStep(k){const t=pday(today()),s=gSel||(gSel={m:t.slice(0,7),w:wIdx(t)});
+  if(k==='m-1'){s.m=shift(s.m,-1);s.w=Math.min(s.w,nW(s.m))}
+  else if(k==='m+1'){s.m=shift(s.m,1);s.w=Math.min(s.w,nW(s.m))}
+  else if(k==='w-1'){if(s.w>1)s.w--;else{s.m=shift(s.m,-1);s.w=nW(s.m)}}
+  else if(k==='w+1'){if(s.w<nW(s.m))s.w++;else{s.m=shift(s.m,1);s.w=1}}}
 function gildaCard(){
-  const L=S.tx.filter(t=>t.t==='i'&&t.c===GC),sum=a=>a.reduce((x,t)=>x+t.a,0),t0=today(),w0=wk(t0),m0=t0.slice(0,7);
-  const thisW=sum(L.filter(t=>wk(t.d)===w0)),thisM=sum(L.filter(t=>t.d.slice(0,7)===m0));
-  const byM={},byW={};L.forEach(t=>{const m=t.d.slice(0,7),w=wk(t.d);byM[m]=(byM[m]||0)+t.a;byW[w]=(byW[w]||0)+t.a});
-  const ms=Object.keys(byM).sort().reverse(),ws=Object.keys(byW).sort().reverse(),w12=ws.slice(0,12);
-  const mxM=Math.max(1,...ms.map(k=>byM[k])),mxW=Math.max(1,...w12.map(k=>byW[k])),years=[...new Set(ms.map(k=>k.slice(0,4)))];
+  const L=S.tx.filter(t=>t.t==='i'&&t.c===GC),sum=a=>a.reduce((x,t)=>x+t.a,0),pt=pday(today()),cm=pt.slice(0,7),cw=wIdx(pt);
+  const s=gSel||(gSel={m:cm,w:cw}),byM={};L.forEach(t=>{const m=pday(t.d).slice(0,7);byM[m]=(byM[m]||0)+t.a});
+  const ms=Object.keys(byM).sort().reverse(),minM=ms.length&&ms[ms.length-1]<cm?ms[ms.length-1]:cm,maxM=ms.length&&ms[0]>cm?ms[0]:cm;
+  if(s.w>nW(s.m))s.w=nW(s.m);
+  const P=payOf(s.m,s.w),sumW=sum(L.filter(t=>pday(t.d)===P)),sumM=byM[s.m]||0;
+  const mxM=Math.max(1,...ms.map(k=>byM[k])),years=[...new Set(ms.map(k=>k.slice(0,4)))];
   const row=(l,v,mx)=>`<div class="ci"><span style="flex:1;min-width:0;padding-right:12px"><span>${l}</span><span class="b2"><i style="width:${v/mx*100}%"></i></span></span><b>${fmt(v)}</b></div>`;
-  const stat=(t,v,s)=>`<div style="background:var(--bg);border-radius:10px;padding:10px 12px"><div class="mute small">${t}</div><div style="font-size:20px;font-weight:800;color:${v>0?'var(--ok)':'var(--ink)'}">${fmt(v)}</div><div class="mute small">${s}</div></div>`;
-  const det=(g,t,n,body)=>`<details class="cg" data-g="${g}"${OPEN[g]?' open':''}><summary><span>${t}</span><span class="rt"><span class="mute small">${n}</span><i class="chev"></i></span></summary>${body}</details>`;
+  const blk=(title,v,sub,kl,kr,dl,dr)=>`<div style="background:var(--bg);border-radius:10px;padding:8px 10px"><div class="row" style="gap:4px"><button class="ib xs" data-gs="${kl}"${dl?' disabled':''} aria-label="Anterior">‹</button><span class="small" style="text-align:center;flex:1;font-weight:700">${title}</span><button class="ib xs" data-gs="${kr}"${dr?' disabled':''} aria-label="Siguiente">›</button></div><div style="text-align:center;font-size:20px;font-weight:800;margin-top:6px;color:${v>0?'var(--ok)':'var(--ink)'}">${fmt(v)}</div><div class="mute small" style="text-align:center">${sub}</div></div>`;
+  const dot='<span style="color:var(--ok)">● </span>';
   return `<div class="card"><div class="row"><b>Cobros de Gildas</b><span class="chip">Total ${fmt(sum(L))}</span></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">${stat('Esta semana',thisW,wkLabel(w0))}${stat('Este mes',thisM,mLabel(m0))}</div>
-  ${L.length?det('gm','Por mes',ms.length,years.map(y=>`<div class="mute small" style="padding:8px 14px 2px;background:var(--bg)">${y}: total ${fmt(ms.filter(k=>k.startsWith(y)).reduce((a,k)=>a+byM[k],0))}</div>`+ms.filter(k=>k.startsWith(y)).map(k=>row(mLabel(k),byM[k],mxM)).join('')).join(''))+det('gw','Por semana',ws.length,w12.map(k=>row(wkLabel(k),byW[k],mxW)).join('')):`<p class="mute small" style="margin:10px 0 0">Apunta un ingreso con la categoría Gildas y aparecerá aquí, por semana y por mes.</p>`}</div>`}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">${blk((s.m===cm&&s.w===cw?dot:'')+'Semana '+s.w,sumW,fShort(addD(P,-6))+' – '+fShort(P),'w-1','w+1',s.w===1&&s.m<=minM,s.w===nW(s.m)&&s.m>=maxM)}${blk((s.m===cm?dot:'')+(s.m===cm?'Este mes':'Mes'),sumM,mLabel(s.m),'m-1','m+1',s.m<=minM,s.m>=maxM)}</div>
+  ${L.length?`<div style="margin-top:14px;font-weight:600">Por mes</div>${years.map((y,i)=>{const ks=ms.filter(k=>k.startsWith(y));return yrDet('gy'+y,y,ks.reduce((x,k)=>x+byM[k],0),pgr('gm'+y,ks,k=>row(mName(k),byM[k],mxM)),i===0)}).join('')}`:`<p class="mute small" style="margin:10px 0 0">Apunta un ingreso con la categoría Gildas y aparecerá aquí, por semana y por mes.</p>`}</div>`}
 const fmtD=d=>d.slice(8)+'/'+d.slice(5,7)+'/'+d.slice(0,4);
 function bkDays(){return S&&S.lb?Math.floor((new Date(today())-new Date(S.lb))/864e5):null}
 function bkDue(){if(!S||!S.tx.length)return false;return S.lb?bkDays()>=(S.bk||7):true}
@@ -153,7 +184,7 @@ function render(){
   const vAll=S.tx.filter(t=>t.t==='v'),byM={},hist={};
   vAll.forEach(t=>{byM[t.c]=(byM[t.c]||0)+t.a;const k=mk(t.d);(hist[k]=hist[k]||{})[t.c]=(hist[k][t.c]||0)+t.a});
   const mkts=Object.entries(byM).sort((a,b)=>b[1]-a[1]),hk=Object.keys(hist).sort().reverse();
-  const invMk=invT>0?`<div style="margin-top:14px;font-weight:600">Por mercado</div>${mkts.map(([c,v])=>`<div class="cat"><span class="dot" style="background:${colorFor('catsV',c)}"></span><span style="width:104px">${esc(c)}</span><span class="b"><i style="width:${v/invT*100}%;background:${colorFor('catsV',c)}"></i></span><span class="small">${fmt(v)} <span class="mute">${Math.round(v/invT*100)} %</span></span></div>`).join('')}<details class="cg" data-g="hv"${OPEN.hv?' open':''}><summary><span>Histórico mes a mes</span><span class="rt"><span class="mute small">${hk.length}</span><i class="chev"></i></span></summary>${hk.map(k=>{const e=Object.entries(hist[k]).sort((a,b)=>b[1]-a[1]),tot=e.reduce((a,[,v])=>a+v,0);return `<div class="ci" style="align-items:flex-start"><span><span style="text-transform:capitalize">${label(k)}</span><span class="mute small" style="display:block">${e.map(([c,v])=>esc(c)+' '+fmt(v)).join(' · ')}</span></span><b>${fmt(tot)}</b></div>`}).join('')}</details>`:'';
+  const invMk=invT>0?`<div style="margin-top:14px;font-weight:600">Por mercado</div>${mkts.map(([c,v])=>`<div class="cat"><span class="dot" style="background:${colorFor('catsV',c)}"></span><span style="width:104px">${esc(c)}</span><span class="b"><i style="width:${v/invT*100}%;background:${colorFor('catsV',c)}"></i></span><span class="small">${fmt(v)} <span class="mute">${Math.round(v/invT*100)} %</span></span></div>`).join('')}<div style="margin-top:14px;font-weight:600">Histórico mes a mes</div>${[...new Set(hk.map(k=>k.slice(0,4)))].map((y,i)=>{const ks=hk.filter(k=>k.startsWith(y));return yrDet('hy'+y,y,ks.reduce((a,k)=>a+Object.values(hist[k]).reduce((x,v)=>x+v,0),0),pgr('hm'+y,ks,k=>{const e=Object.entries(hist[k]).sort((a,b)=>b[1]-a[1]),tot=e.reduce((a,[,v])=>a+v,0);return `<div class="ci" style="align-items:flex-start"><span><span style="text-transform:capitalize">${label(k)}</span><span class="mute small" style="display:block">${e.map(([c,v])=>esc(c)+' '+fmt(v)).join(' · ')}</span></span><b>${fmt(tot)}</b></div>`}),i===0)}).join('')}`:'';
   const mt=S.tx.filter(t=>mk(t.d)===cur).sort((a,b)=>b.d.localeCompare(a.d)||b.id-a.id);
   const by={};mt.filter(t=>t.t==='g').forEach(t=>by[t.c]=(by[t.c]||0)+t.a);
   const cats=Object.entries(by).sort((a,b)=>b[1]-a[1]);
@@ -191,7 +222,7 @@ function render(){
   <div class="card" id="mv"><b>Movimientos</b>${mt.length?mt.slice(0,shown).map(t=>`<div class="tx" data-ed="${t.id}"><span class="dot" style="background:${colorFor(CK[t.t],t.c)}"></span><div class="m"><div class="n">${esc(t.n||t.c)}</div><div class="mute small">${esc(t.c)} · ${t.d.slice(8)}/${t.d.slice(5,7)}${t.nl?' <span class="chip" style="margin:0 0 0 4px">Fuera del límite</span>':''}</div></div><span style="font-weight:600;color:${t.t==='g'?'var(--bad)':'var(--ok)'}">${t.t==='i'?'+':'−'}${fmt(t.a)}</span><button class="x" data-del="${t.id}" aria-label="Borrar">✕</button></div>`).join('')+(mt.length>PAGE&&(mt.length>shown||shown>PAGE)?`<div class="row" style="margin-top:10px">${mt.length>shown?`<button id="more" class="wb" style="flex:1">Ver más (${mt.length-shown})</button>`:''}${shown>PAGE?`<button id="less" class="wb" style="flex:1">Ver menos</button>`:''}</div>`:''):'<p class="mute">Sin movimientos este mes. Pulsa «Añadir movimiento».</p>'}</div>`;
   $('#pv').onclick=()=>{cur=shift(cur,-1);shown=PAGE;render()};
   $('#nx').onclick=()=>{cur=shift(cur,1);shown=PAGE;render()};
-  $('#add').onclick=()=>addSheet();$('#edl').onclick=$('#cfg').onclick=cfgSheet;if($('#more'))$('#more').onclick=()=>{shown+=PAGE;render()};if($('#less'))$('#less').onclick=()=>{shown=PAGE;render();$('#mv').scrollIntoView({block:'center'})};
+  $('#add').onclick=()=>addSheet();document.querySelectorAll('[data-gs]').forEach(b=>b.onclick=()=>{gStep(b.dataset.gs);render()});document.querySelectorAll('[data-pm]').forEach(b=>b.onclick=()=>{PG[b.dataset.pm]=(PG[b.dataset.pm]||5)+5;render()});document.querySelectorAll('[data-pl]').forEach(b=>b.onclick=()=>{PG[b.dataset.pl]=5;render()});$('#edl').onclick=$('#cfg').onclick=cfgSheet;if($('#more'))$('#more').onclick=()=>{shown+=PAGE;render()};if($('#less'))$('#less').onclick=()=>{shown=PAGE;render();$('#mv').scrollIntoView({block:'center'})};
   document.querySelectorAll('details.cg').forEach(d=>d.ontoggle=()=>{OPEN[d.dataset.g]=d.open});
   document.querySelectorAll('[data-ed]').forEach(r=>r.onclick=e=>{if(e.target.closest('[data-del]'))return;addSheet(r.dataset.ed)});
   document.querySelectorAll('[data-fx]').forEach(b=>b.onclick=()=>fxSheet(b.dataset.fx));
@@ -266,6 +297,8 @@ function cfgSheet(){
   <div class="mute small" style="margin-top:6px">Si un mes te pasas, el límite del siguiente baja por ese exceso.</div>
   <label for="sd">Día en que empieza tu mes (cuando cobras)</label><div class="row"><input id="sd" type="number" inputmode="numeric" min="1" max="28" value="${S.sd||1}"><button id="ss">Guardar</button></div>
   <div class="mute small" style="margin-top:6px">Tu mes y tu límite van de ese día al anterior del mes siguiente. Pon 1 para meses naturales.</div>
+  <label for="pd">Día de la semana en que cobras las Gildas</label><select id="pd">${['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'].map((n,i)=>`<option value="${i}"${PD()===i?' selected':''}>${n}</option>`).join('')}</select>
+  <div class="mute small" style="margin-top:6px">Cada semana de cobros termina ese día y cuenta para el mes en que cae ese día.</div>
   <label for="bk">Ajustar saldo del banco (€)</label><div class="row"><input id="bk" type="number" inputmode="decimal" value="${balance().toFixed(2)}"><button id="sb">Guardar</button></div>
   <div style="margin-top:26px;font-weight:800">Metas de ahorro</div>${goalsBlock()}
   ${fxBlock()}
@@ -280,10 +313,12 @@ function cfgSheet(){
   <label for="bi">Restaurar una copia</label>
   <textarea id="bi" rows="3" placeholder="Pega aquí los datos copiados" style="font-size:12px"></textarea>
   <div class="row" style="margin-top:8px"><input id="bf" type="file" accept=".json,application/json" style="display:none"><button id="bl" style="flex:1">Elegir archivo</button><button class="pri" id="br" style="flex:1">Restaurar</button></div>
+  ${document.querySelector('link[rel="manifest"]')?'':`<div style="margin-top:22px"><button class="link" id="sx">${S.tx.some(t=>t.ex)?'Quitar datos de ejemplo':'Cargar datos de ejemplo (2 años)'}</button></div>`}
   <div style="margin-top:26px"><button class="link" id="rs">Borrar todos los datos</button></div>`);
   $('#sl').onclick=()=>{const v=parseFloat($('#lm').value);if(v>=0){S.limit=v;save();close();render()}};
   document.querySelectorAll('[data-dg]').forEach(b=>b.onclick=()=>{S.goals=(S.goals||[]).filter(g=>g!==+b.dataset.dg);save();OPEN.gl=true;cfgSheet()});
   document.querySelectorAll('[data-ag]').forEach(b=>b.onclick=()=>{const v=parseFloat($('#ng').value);if(v>0&&!(S.goals||[]).includes(v)){S.goals=(S.goals||[]).concat(v);save();OPEN.gl=true;cfgSheet()}else $('#ng').focus()});
+  $('#pd').onchange=()=>{S.pd=+$('#pd').value;gSel=null;save();render()};
   $('#ss').onclick=()=>{const v=parseInt($('#sd').value);if(v>=1&&v<=28){S.sd=v;cur=mk(today());shown=PAGE;save();close();render()}};
   document.querySelectorAll('[data-df]').forEach(b=>b.onclick=()=>{S.fx=FX().filter(f=>f.id!==b.dataset.df);save();cfgSheet()});
   document.querySelectorAll('[data-af]').forEach(b=>b.onclick=()=>{const n=$('#fn').value.trim(),a=parseFloat($('#fa').value),q=Math.max(1,parseInt($('#fq').value)||1);if(!n||!(a>0)){(n?$('#fa'):$('#fn')).focus();return}FX().push({id:'f'+Date.now(),n,a,q});save();OPEN.fxs=true;cfgSheet()});
@@ -304,6 +339,7 @@ function cfgSheet(){
   $('#br').onclick=()=>{let d;try{d=JSON.parse($('#bi').value);if(!d||!Array.isArray(d.tx)||typeof d.b0!=='number')throw 0}catch(e){$('#br').textContent='Datos no válidos';return}
     if(!$('#br').dataset.a){$('#br').dataset.a=1;$('#br').textContent='Pulsa otra vez: reemplaza tus datos';return}
     S=d;if(!S.catsI)S.catsI=[...DI];if(!S.catsV)S.catsV=[...DV];save();close();render()};
+  if($('#sx'))$('#sx').onclick=()=>{if(S.tx.some(t=>t.ex)){const net=S.tx.filter(t=>t.ex).reduce((a,t)=>a+(t.t==='i'?t.a:-t.a),0);S.tx=S.tx.filter(t=>!t.ex);S.b0+=net}else seedSample();save();close();render()};
   $('#rs').onclick=()=>{if(!$('#rs').dataset.a){$('#rs').dataset.a=1;$('#rs').textContent='Pulsa otra vez para borrar todo';return}S=null;mem=null;try{localStorage.removeItem(KEY)}catch(e){}close();render()};
 }
 if("serviceWorker" in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
