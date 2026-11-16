@@ -396,7 +396,7 @@ function fxBlock(){const L=FX();return sec('fxs','🔁 Pagos fijos',L.length+'',
 let CD={};
 const cv=(k,d)=>CD[k]!==undefined?CD[k]:d;
 function cfgCapture(){if(!$('#sh').classList.contains('open'))return;document.querySelectorAll('#shc [data-cd]').forEach(i=>{CD[i.dataset.cd]=i.value})}
-function cfgOpen(){CD={};['s_help','s_gen','s_wal','s_show','gl','fxs','s_cat','s_dest','s_plan','s_bk','s_data','cats','catsI','catsV'].forEach(k=>delete OPEN[k]);cfgSheet()}
+function cfgOpen(){CD={};['s_help','s_gen','s_wal','s_show','gl','fxs','s_cat','s_dest','s_plan','s_bk','s_data','cats','catsI','catsV'].forEach(k=>delete OPEN[k]);cfgSheet();$('#shc').scrollTop=0;$('#sh').scrollTop=0}
 const SECK={gen:'s_gen',show:'s_show',plan:'s_plan',dest:'s_dest',bk:'s_bk'};
 let SKIPCAP=false;
 const CFK={gen:k=>['lm','sd','pd','bk','d0'].includes(k),show:k=>k==='trk',plan:k=>k==='pst'||k.startsWith('pa|'),dest:k=>k.startsWith('og|')||k.startsWith('st|'),bk:k=>k==='bkd'};
@@ -417,7 +417,7 @@ function cfgCancel(k){cfgCapture();Object.keys(CD).forEach(x=>{if(CFK[k](x))dele
 const sec=(k,t,sub,d,body,flush)=>{const o=OPEN[k]===undefined?d:OPEN[k];return `<details class="cg" data-g="${k}"${o?' open':''} style="margin-top:12px"><summary><span>${t}</span><span class="rt"><span class="mute small">${sub}</span><i class="chev"></i></span></summary><div style="padding:${flush?'0':'4px 14px 16px'}">${body}</div></details>`};
 function cfgSheet(){
   if(!SKIPCAP)cfgCapture();SKIPCAP=false;
-  open(`<div style="position:sticky;top:0;z-index:3;background:var(--bg);display:flex;align-items:center;gap:12px;margin:calc(-16px - env(safe-area-inset-top,0px)) -16px 8px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 10px;border-bottom:1px solid var(--line)"><button id="xc" aria-label="Cerrar ajustes" style="font-size:18px;line-height:1;padding:8px 12px">✕</button><h2>Ajustes</h2></div>
+  open(`<div style="position:sticky;top:calc(-16px - env(safe-area-inset-top,0px));z-index:3;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;margin:calc(-16px - env(safe-area-inset-top,0px)) -16px 8px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 10px;border-bottom:1px solid var(--line)"><h2>Ajustes</h2><button id="xc" aria-label="Cerrar ajustes" style="font-size:18px;line-height:1;padding:8px 12px">✕</button></div>
   ${sec('s_help','🧭 Tutorial y ayuda',S.tutDone?'<b style="color:var(--ok)">✓ Completado</b>':'Guías paso a paso',false,helpBody())}
   ${sec('s_gen','⚙️ General','Límite, mes y saldo',false,`<label for="lm">Límite mensual de gasto (€)</label><div class="row"><input id="lm" data-cd="lm" type="number" inputmode="decimal" value="${cv('lm',S.limit)}"></div>
   <div class="mute small" style="margin-top:6px">Si un mes te pasas, el límite del siguiente baja por ese exceso.</div>
