@@ -316,7 +316,7 @@ function renderHome(){
 
 function newState(b,l,tn,fts,seed){
     const ci=[...DI];if(tn&&!ci.includes(tn))ci.splice(1,0,tn);
-    S={b0:b,limit:l,cats:['Alimentación','Transporte','Ocio','Hogar','Salud','Otros'],catsI:ci,catsV:[...DV],fx:[],fxInit:1,og:1,og2:1,gc1:1,mg1:1,mk2:1,pers1:1,pl1:1,pl2:1,cu1:1,plan:[],ft:fts,trk:tn,goals:[],d0:today(),tx:[]};
+    S={b0:b,limit:l,cats:['Alimentación','Transporte','Ocio','Hogar','Salud','Otros'],catsI:ci,catsV:[...DV],fx:[],fxInit:1,og:1,og2:1,gc1:1,mg1:1,mk2:1,pers1:1,pl1:1,pl2:1,cu1:1,plan:[],ft:fts,trk:tn,goals:[],d0:today(),tx:[]};S.deu1=1;ensureDeudas();
     if(seed){penSamples();const p=shift(cur,-1),c=cur;let id=1;
       const A=(d,t,a,cat,n)=>S.tx.push({id:id++,d,t,a,c:cat,n});
       A(p+'-01','i',1450,'Nómina','Nómina');A(p+'-04','g',180,'Alimentación','Compra mensual');A(p+'-12','g',90,'Ocio','Cenas');A(p+'-20','g',130,'Hogar','Luz y agua');
@@ -860,7 +860,7 @@ ${O.length?`<div class="grid2" style="margin:10px 0 4px"><div><div class="small 
 <div class="row" style="gap:10px;margin-top:12px"><button class="wb" data-pd="open" style="flex:1">${O.length>3?'Ver todos ('+O.length+')':'Ver pendientes'}</button><button class="pri" data-pd="add" style="flex:1">＋ Añadir</button></div></div>`}
 let PT='open',PNO=0;
 function ensureDeudas(){['cats','catsI'].forEach(k=>{if(S[k]&&!S[k].includes('Deudas')){S[k].push('Deudas');colorFor(k,'Deudas')}})}
-setTimeout(()=>{if(S&&S.cats&&S.catsI&&(S.cats.includes('Deudas')||S.catsI.includes('Deudas'))){ensureDeudas();save()}},0);
+setTimeout(()=>{if(S&&S.cats&&S.catsI&&(!S.deu1||S.cats.includes('Deudas')||S.catsI.includes('Deudas'))){S.deu1=1;ensureDeudas();save()}},0);
 function penSheet(){const D=PNL(),O=pOpen(),H=D.filter(p=>p.done).sort((a,b)=>(b.dd||'').localeCompare(a.dd||''));
 const row=p=>{const d=pDue(p),part=p.paid>0&&!p.done;return `<div class="card" style="margin:10px 0 0;padding:12px 14px"><div class="row" style="gap:10px;align-items:flex-start"><span style="min-width:0"><b style="font-size:16px;overflow-wrap:anywhere">${esc(p.who)}</b><span class="small mute" style="display:block">${esc(p.n||'Sin concepto')}</span><span class="small ${p.done?'okc':d.c}" style="display:block;margin-top:2px">${p.done?'✓ Saldado el '+dShort(p.dd||today()):d.t}</span></span><span style="text-align:right;white-space:nowrap"><b class="${p.dir==='ow'?'okc':'badc'}" style="font-size:17px">${p.dir==='ow'?'+':'−'}${fmt(p.done?p.a:pRest(p))}</b>${part?`<span class="small mute" style="display:block">de ${fmt(p.a)}</span>`:''}</span></div>
 <div class="row" style="gap:8px;margin-top:10px;justify-content:flex-start">${p.done?'':`<button class="x pl on" data-pd="settle" data-id="${p.id}">${p.dir==='ow'?'Cobrar':'Pagar'}</button>`}<button class="x pl" data-pd="edit" data-id="${p.id}">${IC.pen} Editar</button><span style="flex:1"></span><button class="x" data-pd="del" data-id="${p.id}" aria-label="Eliminar">${IC.trash}</button></div></div>`};
